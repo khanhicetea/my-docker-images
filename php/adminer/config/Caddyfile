@@ -1,0 +1,7 @@
+:8888 {
+    root /www
+    rewrite .* /adminer.php
+    fastcgi / /run/phpfpm.sock php
+
+    on startup /usr/local/bin/docker-php-entrypoint php-fpm &
+}
