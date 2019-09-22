@@ -18,6 +18,7 @@ ENV PHPIZE_DEPS \
     freetype-dev \
     libpng-dev  \
     libjpeg-turbo-dev
+
 RUN apk add --no-cache --virtual .persistent-deps \
     # for intl extension
     icu-dev \
@@ -30,7 +31,9 @@ RUN apk add --no-cache --virtual .persistent-deps \
     # for GD
     freetype \
     libpng \
-    libjpeg-turbo
+    libjpeg-turbo \
+    # for zip
+    libzip-dev
 RUN set -xe \
     # workaround for rabbitmq linking issue
     && ln -s /usr/lib /usr/local/lib64 \
@@ -49,6 +52,7 @@ RUN set -xe \
     && docker-php-ext-configure pdo_pgsql --with-pgsql \
     && docker-php-ext-configure mbstring --enable-mbstring \
     && docker-php-ext-configure soap --enable-soap \
+    && docker-php-ext-configure zip --with-libzip=/usr/include \
     && docker-php-ext-install -j$(nproc) \
         gd \
         bcmath \
@@ -59,6 +63,7 @@ RUN set -xe \
         pdo_pgsql \
         mbstring \
         soap \
+        zip \
         iconv
 # Copy configuration
 ENV PHP_REDIS_VERSION 4.3.0
@@ -84,6 +89,7 @@ COPY config/php7.ini /usr/local/etc/php/conf.d/
 COPY config/fpm/php-fpm.conf /usr/local/etc/
 COPY config/fpm/pool.d /usr/local/etc/pool.d
 
+# Install composer and plugin
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
     php -r "if (hash_file('sha384', 'composer-setup.php') === 'a5c698ffe4b8e849a443b120cd5ba38043260d5c4023dbf93e1558871f1f07f58274fc6f4c93bcfd858c6bd0775cd8d1') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
     php composer-setup.php && \
@@ -91,6 +97,7 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     mv composer.phar /usr/local/bin/composer && \
     chmod +x /usr/local/bin/composer
 
+# Add new user
 RUN addgroup -S php && adduser -D -u 1000 -G php php
 USER php
 RUN composer global require hirak/prestissimo
