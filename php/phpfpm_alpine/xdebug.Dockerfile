@@ -1,4 +1,4 @@
-FROM php:7.3-fpm-alpine3.8
+FROM php:7.3-fpm-alpine
 # persistent / runtime deps
 ENV PHPIZE_DEPS \
     autoconf \
@@ -71,15 +71,26 @@ RUN git clone --branch ${PHP_REDIS_VERSION} https://github.com/phpredis/phpredis
         && ./configure  \
         && make  \
         && make install \
-        && make test \
-        && apk del .build-deps \
-        && rm -rf /tmp/* \
+        && make test
+# Copy configuration
+ENV PHP_XDEBUG_VERSION 2.9.0
+COPY config/redis.ini /usr/local/etc/php/conf.d/
+RUN git clone --branch ${PHP_XDEBUG_VERSION} https://github.com/xdebug/xdebug /tmp/xdebug \
+        && cd /tmp/xdebug \
+        && phpize  \
+        && ./configure  \
+        && make  \
+        && make install
+COPY config/xdebug.ini /usr/local/etc/php/conf.d/
+RUN apk del .build-deps \
+    && rm -rf /tmp/* \
+    && rm -rf /app \
+    && mkdir /app
 # Possible values for ext-name:
 # bcmath bz2 calendar ctype curl dba dom enchant exif fileinfo filter ftp gd gettext gmp hash iconv imap interbase intl
 # json ldap mbstring mcrypt mssql mysql mysqli oci8 odbc opcache pcntl pdo pdo_dblib pdo_firebird pdo_mysql pdo_oci
 # pdo_odbc pdo_pgsql pdo_sqlite pgsql phar posix pspell readline recode reflection session shmop simplexml snmp soap
 # sockets spl standard sybase_ct sysvmsg sysvsem sysvshm tidy tokenizer wddx xml xmlreader xmlrpc xmlwriter xsl zip
-COPY config/redis.ini /usr/local/etc/php/conf.d/
 COPY config/php7.ini /usr/local/etc/php/conf.d/
 COPY config/fpm/php-fpm.conf /usr/local/etc/
 COPY config/fpm/pool.d /usr/local/etc/pool.d

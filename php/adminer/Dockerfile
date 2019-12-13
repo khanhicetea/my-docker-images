@@ -1,6 +1,6 @@
 FROM abiosoft/caddy:1.0.3-no-stats as caddy
 
-FROM php:7.3-fpm-alpine
+FROM php:7.4-fpm-alpine
 
 RUN set -ex \
     && apk --no-cache add postgresql-libs postgresql-dev \
@@ -10,7 +10,7 @@ RUN set -ex \
 
 COPY config/zzz-adminer.conf /usr/local/etc/php-fpm.d/zzz-adminer.conf
 COPY config/adminer.ini /usr/local/etc/php/conf.d/adminer.ini
-COPY adminer.php /www/adminer.php
+COPY adminer-mysql.php /www/adminer.php
 COPY config/Caddyfile /etc/Caddyfile
 
 EXPOSE 8888
